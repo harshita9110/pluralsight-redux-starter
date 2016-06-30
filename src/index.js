@@ -8,18 +8,25 @@ class Login extends React.Component
 
     this.state={
       'isFetching':false,
-      'error':false
+      'error':false,
+      'songs':[]
     }
   }
   search(form)
   {
+      this.setState({isFetching:true});
         SC.get('/tracks', {
     q: `${form.songChoice}`
     }).then(function(tracks) {
-      this.setState({isFetching:false});
       console.log(tracks);
-        redirect();
+      updateSongs();
+
+
     });
+  }
+  updateSongs()
+  {
+    this.setState({isFetching:false});
   }
 
   login(form, redirect)
@@ -38,6 +45,7 @@ class Login extends React.Component
 
     // initiate auth popup
 SC.connect().then(function() {
+  this.setState({isFetching:false});
   return SC.get('/me');
 }).then(function(me) {
   alert('Hello, ' + me.username);
@@ -54,7 +62,7 @@ SC.connect().then(function() {
       <div id="login-container" className="auth-container">
       <h1>Login</h1>
       <LoginForm onLogin={this.login.bind(this)} onLoginRedirect={this.loginRedirect.bind(this)}
-      isFetching={this.state.isFetching} error={this.state.error} onSearch={this.search.bind(this)} />
+      isFetching={this.state.isFetching} songs={this.state.songs} error={this.state.error} onSearch={this.search.bind(this)} />
       </div>
     );
   }
@@ -85,7 +93,7 @@ class LoginForm extends React.Component{
     this.props.onSearch(this.state);
   }
   render(){
-    let submitProps, loading,errorString;
+    let submitProps, loading,errorString,listItems;
 
     if(this.props.isFetching)
     {
@@ -97,11 +105,25 @@ class LoginForm extends React.Component{
     {
       errorString="Error logging in";
     }
+    if(this.props.songs)
+    {
+       listItems = this.props.songs.map(function(item){
+        return(
+          <li key={item.id}>{item.title}</li>
+        );
+      });
+    }
+
     return(
       <form onSubmit={this.handleSubmit.bind(this)} onChange={this.handleInputChange.bind(this)}>
       <div>
         <label htmlFor="songChoice">Song Choice</label>
         <input type="text" name="songChoice" className="form-control" />
+      </div>
+      <div>
+      <ul>
+        {listItems}
+      </ul>
       </div>
       <button onClick={this.handleSearch.bind(this)}>Search</button>
       <button type="submit" className="btn btn-primary" {...submitProps}>{'Login'}</button>
